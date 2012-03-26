@@ -225,7 +225,7 @@ test("saving a model with an id should add it to the collection if it isn't alre
   ok(Post.collection.first() === post)
 })
 
-test("anyInstance events", 14, function() {
+test("anyInstance events", 22, function() {
   var Post = Model("post")
 
   var results = []
@@ -233,26 +233,45 @@ test("anyInstance events", 14, function() {
   Post.anyInstance.on("initialize", function(post) { results.push("initialize", post) })
   Post.anyInstance.on("save", function(post) { results.push("save", post) })
   Post.anyInstance.on("destroy", function(post) { results.push("destroy", post) })
+  Post.anyInstance.on("invalid", function(post) { results.push("invalid", post) })
 
   var post1 = new Post()
   var post2 = new Post()
   var post3 = new Post()
+  var post4 = new Post()
+  var post5 = new Post()
+
+  post4.validate = function(){
+    this.errors.add("title", "should be invalid");
+    return false;
+  }
 
   post1.save()
   post3.save()
   post1.destroy()
   post2.save()
+  post4.save()
+  
+  post5.constructor.persistence = {
+    destroy:function(model, callback){callback(false)},
+    save:function(model, callback){callback(false)}
+  }
+
+  post5.save(function(){/*some callback*/})
 
   var expected = [
     "initialize", post1,
     "initialize", post2,
     "initialize", post3,
+    "initialize", post4,
+    "initialize", post5,
     "save", post1,
     "save", post3,
     "destroy", post1,
-    "save", post2
+    "save", post2,
+    "invalid", post4,
+    "invalid", post5
   ]
-
   for (var i = 0; i < expected.length; i++) {
     ok(results[i] === expected[i])
   }

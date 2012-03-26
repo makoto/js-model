@@ -90,6 +90,8 @@
             Model.Utils.extend(self.attributes, self.changes)
             self.reset()
             self.emit("save", self)
+          }else{
+            self.emit("invalid", self)
           }
 
           if (callback) callback.apply(self, arguments)
@@ -97,7 +99,9 @@
       } else if (callback) {
         callback(false)
       }
-
+      if (this.errors.size() > 0){
+        this.emit("invalid", this)
+      };
       return this
     },
 
